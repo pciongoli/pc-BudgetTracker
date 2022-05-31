@@ -1,6 +1,6 @@
 {
    "name": "pc-budget-tracker",
-   "short_name": "budget",
+   "short_name": "pc-budget-tracker",
    "icons": [
       {
          "src": "icons/icon-72x72.png",
