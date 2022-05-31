@@ -5,11 +5,6 @@
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <meta http-equiv="X-UA-Compatible" content="ie=edge" />
       <meta name="theme-color" content="#317EFB" />
-      <link
-         rel="shortcut icon"
-         href="icons/icon-192x192.png"
-         type="image/x-icon"
-      />
 
       <link
          rel="stylesheet"
@@ -17,7 +12,9 @@
       />
       <link rel="stylesheet" href="css/styles.css" />
 
-      <title>PC Budget Tracker</title>
+      <link rel="manifest" href="manifest.json" />
+
+      <title>Budget Tracker</title>
    </head>
    <body>
       <div class="wrapper">
@@ -56,6 +53,18 @@
       </div>
 
       <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+      <script src="js/idb.js"></script>
       <script src="js/index.js"></script>
    </body>
+   <!-- register the service-worker -->
+   <script type="text/javascript">
+      (function () {
+         if ("serviceWorker" in navigator) {
+            navigator.serviceWorker
+               .register("/service-worker.js")
+               .then(() => console.log("Registered successfully."))
+               .catch((error) => console.log("Registration failed:", error));
+         }
+      })();
+   </script>
 </html>
