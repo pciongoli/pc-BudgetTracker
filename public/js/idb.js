@@ -1,49 +1,46 @@
-let db;
-const request = indexedDB.open("pc-budget-tracker", 1);
+const indexedDB =
+   window.indexedDB ||
+   window.mozIndexedDB ||
+   window.webkitIndexedDB ||
+   window.msIndexedDB ||
+   window.shimIndexedDB;
 
-request.onupgradeneeded = function (event) {
-   const db = event.target.result;
-   db.createObjectStore("new_transaction", { autoIncrement: true });
+let db;
+const request = indexedDB.open("budget", 1);
+
+request.onupgradeneeded = ({ target }) => {
+   let db = target.result;
+   db.createObjectStore("pending", { autoIncrement: true });
 };
 
-request.onsuccess = function (event) {
-   // when db is successfully created with its object store (from onupgradedneeded event above), save reference to db in global variable
-   db = event.target.result;
+request.onsuccess = ({ target }) => {
+   db = target.result;
 
-   // check if app is online, if yes run checkDatabase() function to send all local db data to api
+   // check if app is online before reading from db
    if (navigator.onLine) {
-      uploadTransaction();
+      checkDatabase();
    }
 };
 
 request.onerror = function (event) {
-   // log error here
-   console.log(event.target.errorCode);
+   console.log("Woops! " + event.target.errorCode);
 };
 
 function saveRecord(record) {
-   const transaction = db.transaction(["new_transaction"], "readwrite");
+   const transaction = db.transaction(["pending"], "readwrite");
+   const store = transaction.objectStore("pending");
 
-   const pizzaObjectStore = transaction.objectStore("new_transaction");
-
-   // add record to your store with add method.
-   pizzaObjectStore.add(record);
+   store.add(record);
 }
 
-function uploadTransaction() {
-   // open a transaction on your pending db
-   const transaction = db.transaction(["new_transaction"], "readwrite");
-
-   // access your pending object store
-   const pizzaObjectStore = transaction.objectStore("new_transaction");
-
-   // get all records from store and set to a variable
-   const getAll = pizzaObjectStore.getAll();
+function checkDatabase() {
+   const transaction = db.transaction(["pending"], "readwrite");
+   const store = transaction.objectStore("pending");
+   const getAll = store.getAll();
 
    getAll.onsuccess = function () {
-      // if there was data in indexedDb's store, let's send it to the api server
       if (getAll.result.length > 0) {
-         fetch("/api/transaction", {
+         fetch("/api/transaction/bulk", {
             method: "POST",
             body: JSON.stringify(getAll.result),
             headers: {
@@ -51,28 +48,18 @@ function uploadTransaction() {
                "Content-Type": "application/json",
             },
          })
-            .then((response) => response.json())
-            .then((serverResponse) => {
-               if (serverResponse.message) {
-                  throw new Error(serverResponse);
-               }
-
-               const transaction = db.transaction(
-                  ["new_transaction"],
-                  "readwrite"
-               );
-               const pizzaObjectStore =
-                  transaction.objectStore("new_transaction");
-               // clear all items in your store
-               pizzaObjectStore.clear();
+            .then((response) => {
+               return response.json();
             })
-            .catch((err) => {
-               // set reference to redirect back here
-               console.log(err);
+            .then(() => {
+               // delete records if successful
+               const transaction = db.transaction(["pending"], "readwrite");
+               const store = transaction.objectStore("pending");
+               store.clear();
             });
       }
    };
 }
 
 // listen for app coming back online
-window.addEventListener("online", uploadTransaction);
+window.addEventListener("online", checkDatabase);
