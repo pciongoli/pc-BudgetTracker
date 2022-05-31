@@ -21,6 +21,7 @@
    "homepage": "https://github.com/pciongoli/pc-BudgetTracker#readme",
    "dependencies": {
       "compression": "^1.7.4",
+      "lite-server": "^2.5.3",
       "express": "^4.17.1",
       "mongoose": "^5.10.5",
       "morgan": "^1.10.0",
